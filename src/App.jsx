@@ -3,7 +3,7 @@ import {
   Users, Building2, UserCircle, CreditCard, PiggyBank, 
   ArrowRightLeft, LayoutDashboard, Search, Plus, Edit, 
   Trash2, X, AlertCircle, CheckCircle2, ChevronLeft, ChevronRight,
-  Lock, LogOut, Wallet, Send, Bot, Loader2, Key
+  Lock, LogOut, Wallet, Send, Key
 } from 'lucide-react';
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
@@ -45,7 +45,7 @@ const initialGiaoDich = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [toast, setToast] = useState(null);
-  const [successPopup, setSuccessPopup] = useState(null); // State cho Pop-up Thành Công
+  const [successPopup, setSuccessPopup] = useState(null);
   const [currentUser, setCurrentUser] = useState(null); 
 
   // State quản lý dữ liệu các bảng
@@ -127,7 +127,6 @@ export default function App() {
       SoTien: parseFloat(soTien),
       NoiDung: noiDung
     };
-    // Gọi lưu (ẩn toast để dùng Popup)
     const isSuccess = handleSave('GiaoDich', gdData, false, true);
     if (isSuccess) {
       setSuccessPopup({ 
@@ -983,8 +982,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
           }}
         />
       )}
-
-      <ShiroBot user={user} myAccounts={myAccounts} />
     </div>
   );
 }
@@ -1116,122 +1113,5 @@ function SavingsModal({ accounts, onClose, onSubmit }) {
         </form>
       </div>
     </div>
-  );
-}
-
-function ShiroBot({ user, myAccounts }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'model', text: `Shiro xin chào Master ${user.HoTen}! Em có thể giúp gì cho ngài hôm nay ạ?` }]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const apiKey = ""; 
-
-  const fetchWithBackoff = async (url, options, retries = 5) => {
-    const delays = [1000, 2000, 4000, 8000, 16000];
-    for (let i = 0; i < retries; i++) {
-      try {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return await res.json();
-      } catch (err) {
-        if (i === retries - 1) throw err;
-        await new Promise(r => setTimeout(r, delays[i]));
-      }
-    }
-  };
-
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setIsLoading(true);
-
-    const systemPrompt = `Bạn là Shiro, một nữ trợ lý AI dễ thương, tận tâm và chuyên nghiệp của ngân hàng VietnamBank. Ngôn ngữ giao tiếp: Tiếng Việt. Bạn gọi người dùng là Master hoặc Kazeko~sama.
-Thông tin của khách hàng hiện tại:
-- Tên khách hàng: ${user.HoTen}
-- Danh sách tài khoản: ${myAccounts.length > 0 ? myAccounts.map(a => `${a.SoTaiKhoan} (Số dư hiện tại: ${a.SoDu} VND)`).join(', ') : 'Chưa có tài khoản'}
-Hãy trả lời các câu hỏi về tài chính, thông báo số dư hoặc tư vấn các tính năng của VietnamBank một cách tự nhiên, đáng yêu và ngắn gọn.`;
-
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      const payload = {
-        contents: [{ parts: [{ text: userMsg }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] }
-      };
-
-      const result = await fetchWithBackoff(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const botText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Dạ, hệ thống của Shiro đang có chút bối rối, Master chờ một chút rồi thử lại nha!";
-      setMessages(prev => [...prev, { role: 'model', text: botText }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: "Shiro xin lỗi Master, em không thể kết nối tới não bộ AI lúc này ạ. Vui lòng thử lại sau!" }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform z-40 ${isOpen ? 'hidden' : ''}`}
-      >
-        <Bot size={28} />
-      </button>
-
-      {isOpen && (
-        <div className="fixed bottom-8 right-8 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden h-[500px]">
-          <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex justify-between items-center text-white">
-            <div className="flex items-center gap-2">
-              <Bot size={24} />
-              <div>
-                <h3 className="font-bold">Trợ Lý Shiro</h3>
-                <p className="text-xs text-blue-100 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Online</p>
-              </div>
-            </div>
-            <button onClick={() => setIsOpen(false)} className="text-blue-100 hover:text-white"><X size={20}/></button>
-          </div>
-          
-          <div className="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none shadow-sm'}`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-none flex gap-2 items-center">
-                  <Loader2 size={16} className="animate-spin text-blue-500" />
-                  <span className="text-xs text-slate-500">Shiro đang suy nghĩ...</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-200 flex gap-2">
-            <input 
-              type="text" 
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="Hỏi Shiro về số dư..." 
-              className="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:border-blue-500 text-sm"
-            />
-            <button type="submit" disabled={isLoading} className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 disabled:opacity-50">
-              <Send size={18} className="-ml-0.5 mt-0.5" />
-            </button>
-          </form>
-        </div>
-      )}
-    </>
   );
 }
