@@ -3,16 +3,16 @@ import {
   Users, Building2, UserCircle, CreditCard, PiggyBank, 
   ArrowRightLeft, LayoutDashboard, Search, Plus, Edit, 
   Trash2, X, AlertCircle, CheckCircle2, ChevronLeft, ChevronRight,
-  Lock, LogOut, Wallet, Send, Bot, Loader2
+  Lock, LogOut, Wallet, Send, Bot, Loader2, Key
 } from 'lucide-react';
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
-// --- MOCK DATA (Mô phỏng Database ban đầu) ---
+// --- MOCK DATA (Mô phỏng Database ban đầu - ĐÃ THÊM MẬT KHẨU) ---
 const initialKhachHang = [
-  { MaKH: 'KH01', HoTen: 'Nguyễn Văn A', CCCD: '001090123456', NgaySinh: '1990-01-01', SoDienThoai: '0901111111', Email: 'a@gmail.com', DiaChi: 'Hà Nội' },
-  { MaKH: 'KH02', HoTen: 'Trần Thị B', CCCD: '002095654321', NgaySinh: '1995-05-05', SoDienThoai: '0902222222', Email: 'b@gmail.com', DiaChi: 'TP.HCM' },
-  { MaKH: 'KH03', HoTen: 'Lê Hoàng C', CCCD: '003099888777', NgaySinh: '1985-10-10', SoDienThoai: '0903333333', Email: 'c@gmail.com', DiaChi: 'Đà Nẵng' }
+  { MaKH: 'KH01', HoTen: 'Nguyễn Văn A', CCCD: '001090123456', NgaySinh: '1990-01-01', SoDienThoai: '0901111111', Email: 'a@gmail.com', DiaChi: 'Hà Nội', MatKhau: '123456' },
+  { MaKH: 'KH02', HoTen: 'Trần Thị B', CCCD: '002095654321', NgaySinh: '1995-05-05', SoDienThoai: '0902222222', Email: 'b@gmail.com', DiaChi: 'TP.HCM', MatKhau: '123456' },
+  { MaKH: 'KH03', HoTen: 'Lê Hoàng C', CCCD: '003099888777', NgaySinh: '1985-10-10', SoDienThoai: '0903333333', Email: 'c@gmail.com', DiaChi: 'Đà Nẵng', MatKhau: '123456' }
 ];
 
 const initialChiNhanh = [
@@ -21,12 +21,11 @@ const initialChiNhanh = [
 ];
 
 const initialNhanVien = [
-  { MaNV: 'NV01', HoTen: 'Lê Thị Thu', ChucVu: 'Giao dịch viên', MaCN: 'CN01' },
-  { MaNV: 'NV02', HoTen: 'Phạm Văn Dũng', ChucVu: 'Kiểm soát viên', MaCN: 'CN02' }
+  { MaNV: 'NV01', HoTen: 'Lê Thị Thu', ChucVu: 'Giao dịch viên', MaCN: 'CN01', MatKhau: '123456' },
+  { MaNV: 'NV02', HoTen: 'Phạm Văn Dũng', ChucVu: 'Kiểm soát viên', MaCN: 'CN02', MatKhau: '123456' }
 ];
 
 const initialTaiKhoan = [
-  // Shiro đã tính toán lại số dư thực tế sau khi 3 giao dịch mẫu bên dưới chạy (Mô phỏng Trigger đã hoạt động)
   { SoTaiKhoan: 'TK_A', MaKH: 'KH01', MaCN: 'CN01', SoDu: 8000000, NgayMo: '2023-01-01T08:00:00' }, 
   { SoTaiKhoan: 'TK_B', MaKH: 'KH02', MaCN: 'CN02', SoDu: 27000000, NgayMo: '2023-02-01T08:00:00' },
   { SoTaiKhoan: 'TK_C', MaKH: 'KH03', MaCN: 'CN01', SoDu: 20000000, NgayMo: '2023-03-01T08:00:00' }
@@ -46,7 +45,8 @@ const initialGiaoDich = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [toast, setToast] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null); // State quản lý đăng nhập
+  const [successPopup, setSuccessPopup] = useState(null); // State cho Pop-up Thành Công
+  const [currentUser, setCurrentUser] = useState(null); 
 
   // State quản lý dữ liệu các bảng
   const [khachHang, setKhachHang] = useState(initialKhachHang);
@@ -62,24 +62,21 @@ export default function App() {
   };
 
   const handleLogin = (username, password) => {
-    // Mock check Admin
-    if (username === 'admin' && password === '123') {
+    if (username === 'admin' && password === '123456') {
       setCurrentUser({ role: 'ADMIN', name: 'Quản Trị Viên' });
-      showToast('Đăng nhập quyền Admin thành công!');
+      setSuccessPopup({ title: 'Đăng Nhập Thành Công', message: 'Chào mừng Quản Trị Viên quay trở lại hệ thống!' });
       return;
     }
-    // Mock check Nhân viên bằng Mã NV
     const employee = nhanVien.find(nv => nv.MaNV === username);
-    if (employee && password === '123') {
+    if (employee && password === employee.MatKhau) {
       setCurrentUser({ role: 'EMPLOYEE', name: employee.HoTen, ...employee });
-      showToast(`Đăng nhập thành công! Xin chào Nhân viên ${employee.HoTen}`);
+      setSuccessPopup({ title: 'Đăng Nhập Thành Công', message: `Xin chào Nhân viên ${employee.HoTen}, chúc bạn một ngày làm việc hiệu quả!` });
       return;
     }
-    // Mock check Khách hàng bằng Số điện thoại
     const customer = khachHang.find(kh => kh.SoDienThoai === username);
-    if (customer && password === '123') {
+    if (customer && password === customer.MatKhau) {
       setCurrentUser({ role: 'CUSTOMER', ...customer });
-      showToast(`Đăng nhập thành công! Xin chào ${customer.HoTen}`);
+      setSuccessPopup({ title: 'Đăng Nhập Thành Công', message: `Chào mừng ${customer.HoTen} quay trở lại với VietnamBank.` });
       return;
     }
     showToast('Tài khoản hoặc mật khẩu không đúng!', 'error');
@@ -90,7 +87,6 @@ export default function App() {
     setActiveTab('Dashboard');
   };
 
-  // --- ĐĂNG KÝ KHÁCH HÀNG MỚI ---
   const handleRegister = (customerData) => {
     if (khachHang.some(kh => kh.SoDienThoai === customerData.SoDienThoai)) {
       showToast('Số điện thoại đã được đăng ký!', 'error');
@@ -108,28 +104,39 @@ export default function App() {
     const newTaiKhoan = {
       SoTaiKhoan: newSoTK,
       MaKH: newMaKH,
-      MaCN: 'CN01', // Mặc định mở tại Hội sở
+      MaCN: 'CN01', 
       SoDu: 0,
       NgayMo: new Date().toISOString()
     };
 
     setKhachHang(prev => [...prev, newKhachHang]);
     setTaiKhoan(prev => [...prev, newTaiKhoan]);
-    showToast('Đăng ký thành công! Đã tự động cấp 1 tài khoản thanh toán.');
+    setSuccessPopup({ 
+      title: 'Mở Tài Khoản Thành Công', 
+      message: `Chào mừng ${customerData.HoTen}! Bạn đã được cấp số tài khoản thanh toán là ${newSoTK}.` 
+    });
     return true;
   };
 
-  // --- CÁC HÀM XỬ LÝ GIAO DỊCH KHÁCH HÀNG ---
   const handleCustomerTransfer = (soTaiKhoanNguon, taiKhoanDoiUng, soTien, noiDung) => {
     const gdData = {
       SoTaiKhoan: soTaiKhoanNguon,
       TaiKhoanDoiUng: taiKhoanDoiUng,
-      MaNV: '', // Khách tự GD
+      MaNV: '', 
       LoaiGD: 'Chuyển khoản',
       SoTien: parseFloat(soTien),
       NoiDung: noiDung
     };
-    return handleSave('GiaoDich', gdData, false);
+    // Gọi lưu (ẩn toast để dùng Popup)
+    const isSuccess = handleSave('GiaoDich', gdData, false, true);
+    if (isSuccess) {
+      setSuccessPopup({ 
+        title: 'Chuyển Khoản Thành Công', 
+        message: `Bạn đã chuyển ${formatCurrency(soTien)} đến tài khoản ${taiKhoanDoiUng}.` 
+      });
+      return true;
+    }
+    return false;
   };
 
   const handleCustomerOpenSavings = (soTaiKhoanNguon, soTien, kyHan, laiSuat) => {
@@ -143,8 +150,7 @@ export default function App() {
       NoiDung: `Trích tiền mở sổ tiết kiệm kỳ hạn ${kyHan} tháng`
     };
     
-    // Rút tiền trước, nếu thành công (đủ số dư) thì mới tạo sổ
-    const isSuccess = handleSave('GiaoDich', gdData, false);
+    const isSuccess = handleSave('GiaoDich', gdData, false, true);
     if (isSuccess) {
       const d = new Date();
       const daoHan = new Date(d.setMonth(d.getMonth() + Number(kyHan)));
@@ -157,10 +163,33 @@ export default function App() {
         NgayGui: new Date().toISOString().split('T')[0],
         NgayDaoHan: daoHan.toISOString().split('T')[0]
       };
-      handleSave('SoTietKiem', stkData, false);
+      handleSave('SoTietKiem', stkData, false, true);
+      setSuccessPopup({ 
+        title: 'Mở Sổ Thành Công', 
+        message: `Sổ tiết kiệm kỳ hạn ${kyHan} tháng với số tiền ${formatCurrency(tien)} đã được tạo.` 
+      });
       return true;
     }
     return false;
+  };
+
+  const handleChangePassword = (oldPassword, newPassword) => {
+    if (currentUser.MatKhau !== oldPassword) {
+      showToast('Mật khẩu cũ không chính xác!', 'error');
+      return false;
+    }
+    
+    setKhachHang(prev => prev.map(kh => 
+      kh.MaKH === currentUser.MaKH ? { ...kh, MatKhau: newPassword } : kh
+    ));
+    
+    setCurrentUser(prev => ({ ...prev, MatKhau: newPassword }));
+    
+    setSuccessPopup({ 
+      title: 'Đổi Mật Khẩu Thành Công', 
+      message: 'Mật khẩu của bạn đã được cập nhật an toàn. Vui lòng ghi nhớ mật khẩu mới!' 
+    });
+    return true;
   };
 
   // --- CẤU HÌNH CÁC THỰC THỂ (ENTITIES) ---
@@ -174,7 +203,8 @@ export default function App() {
         { key: 'NgaySinh', label: 'Ngày Sinh', type: 'date', required: true },
         { key: 'SoDienThoai', label: 'Số Điện Thoại', type: 'text', required: true },
         { key: 'Email', label: 'Email', type: 'email' },
-        { key: 'DiaChi', label: 'Địa Chỉ', type: 'text' }
+        { key: 'DiaChi', label: 'Địa Chỉ', type: 'text', required: true },
+        { key: 'MatKhau', label: 'Mật Khẩu', type: 'text', required: true }
       ]
     },
     ChiNhanh: {
@@ -192,7 +222,8 @@ export default function App() {
         { key: 'MaNV', label: 'Mã NV', type: 'text', required: true },
         { key: 'HoTen', label: 'Họ Tên', type: 'text', required: true },
         { key: 'ChucVu', label: 'Chức Vụ', type: 'text' },
-        { key: 'MaCN', label: 'Thuộc Chi Nhánh', type: 'select', required: true, options: chiNhanh.map(c => ({ value: c.MaCN, label: `${c.MaCN} - ${c.TenCN}` })) }
+        { key: 'MaCN', label: 'Thuộc Chi Nhánh', type: 'select', required: true, options: chiNhanh.map(c => ({ value: c.MaCN, label: `${c.MaCN} - ${c.TenCN}` })) },
+        { key: 'MatKhau', label: 'Mật Khẩu', type: 'text', required: true }
       ]
     },
     TaiKhoan: {
@@ -231,7 +262,6 @@ export default function App() {
     }
   };
 
-  // --- TRIGGER MÔ PHỎNG (MÔ PHỎNG DATABASE TRIGGER) ---
   const handleGiaoDichTrigger = (gd) => {
     let success = true;
     let errorMsg = '';
@@ -264,7 +294,6 @@ export default function App() {
         if (tkDoiUngIdx === -1) {
           success = false; errorMsg = 'Tài khoản đối ứng không tồn tại trong hệ thống!'; return prevTK;
         }
-        // Trừ nguồn, cộng đích
         newTK[tkNguonIdx] = { ...tkNguon, SoDu: parseFloat(tkNguon.SoDu) - soTien };
         const tkDoiUng = newTK[tkDoiUngIdx];
         newTK[tkDoiUngIdx] = { ...tkDoiUng, SoDu: parseFloat(tkDoiUng.SoDu) + soTien };
@@ -275,11 +304,9 @@ export default function App() {
     return { success, errorMsg };
   };
 
-  // --- CRUD HANDLERS ---
-  const handleSave = (entityKey, data, isEdit) => {
+  const handleSave = (entityKey, data, isEdit, silentSuccess = false) => {
     const entity = entities[entityKey];
     
-    // Đặc thù Giao Dịch: Kiểm tra trigger trước
     if (entityKey === 'GiaoDich' && !isEdit) {
       data.MaGD = (entity.data.length > 0 ? Math.max(...entity.data.map(d => d.MaGD)) + 1 : 1);
       data.NgayGD = new Date().toISOString();
@@ -287,28 +314,26 @@ export default function App() {
       const triggerResult = handleGiaoDichTrigger(data);
       if (!triggerResult.success) {
         showToast(triggerResult.errorMsg, 'error');
-        return false; // Thất bại
+        return false; 
       }
     }
 
     if (isEdit) {
       entity.setData(entity.data.map(item => item[entity.idKey] === data[entity.idKey] ? data : item));
-      showToast('Cập nhật thành công!');
+      if (!silentSuccess) showToast('Cập nhật thành công!');
     } else {
-      // Bỏ qua tạo id cho Giao Dịch vì đã xử lý ở trên
       if (entityKey !== 'GiaoDich' && entity.data.some(item => item[entity.idKey] === data[entity.idKey])) {
          showToast(`Lỗi: ${entity.idKey} đã tồn tại!`, 'error');
          return false;
       }
       entity.setData([...entity.data, data]);
-      showToast('Thêm mới thành công!');
+      if (!silentSuccess) showToast('Thêm mới thành công!');
     }
-    return true; // Thành công
+    return true; 
   };
 
   const handleDelete = (entityKey, id) => {
     const entity = entities[entityKey];
-    // Ràng buộc cơ bản (Foreign Keys simulation)
     if (entityKey === 'KhachHang' && taiKhoan.some(t => t.MaKH === id)) {
       showToast('Không thể xóa Khách Hàng đã có tài khoản!', 'error'); return;
     }
@@ -320,132 +345,140 @@ export default function App() {
     showToast('Đã xóa dữ liệu!');
   };
 
-  // --- RENDER ---
-  if (!currentUser) {
-    return (
-      <div className="relative h-screen bg-slate-100 flex items-center justify-center">
-        {toast && (
-          <div className={`absolute top-10 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-bounce ${toast.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-            {toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
-            <span className="font-medium">{toast.msg}</span>
-          </div>
-        )}
-        <LoginScreen onLogin={handleLogin} onRegister={handleRegister} />
-      </div>
-    );
-  }
-
-  // Render Giao Diện Khách Hàng
-  if (currentUser.role === 'CUSTOMER') {
-    return <CustomerPortal 
-      user={currentUser} 
-      taiKhoan={taiKhoan} 
-      giaoDich={giaoDich} 
-      soTietKiem={soTietKiem} 
-      onLogout={handleLogout} 
-      onTransfer={handleCustomerTransfer}
-      onOpenSavings={handleCustomerOpenSavings}
-    />;
-  }
-
-  // Render Giao Diện Admin & Employee
-  const isEmployee = currentUser.role === 'EMPLOYEE';
+  const isEmployee = currentUser?.role === 'EMPLOYEE';
   const allowedEntities = isEmployee 
     ? ['KhachHang', 'TaiKhoan', 'SoTietKiem', 'GiaoDich'] 
     : Object.keys(entities);
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans text-slate-800">
-      {/* Sidebar */}
-      <div className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl z-10">
-        <div className="p-5 bg-slate-950 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-            V
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-lg tracking-wide">VietnamBank</h1>
-            <p className="text-xs text-slate-400">{isEmployee ? 'Employee Portal' : 'Admin Portal v1.0'}</p>
-          </div>
+    <>
+      {/* Toast Cảnh Báo Toàn Cục */}
+      {toast && (
+        <div className={`fixed top-10 right-10 px-5 py-3 rounded-lg shadow-2xl flex items-center gap-3 z-[150] animate-bounce ${toast.type === 'error' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 'bg-green-100 text-green-800 border-l-4 border-green-500'}`}>
+          {toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+          <span className="font-medium">{toast.msg}</span>
         </div>
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <button 
-            onClick={() => setActiveTab('Dashboard')}
-            className={`w-full flex items-center gap-3 px-6 py-3 transition-colors ${activeTab === 'Dashboard' ? 'bg-blue-600 text-white border-l-4 border-blue-400' : 'hover:bg-slate-800 hover:text-white border-l-4 border-transparent'}`}
-          >
-            <LayoutDashboard size={20} /> Dashboard
-          </button>
-          <div className="px-6 py-2 mt-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Quản Lý Dữ Liệu</div>
-          {allowedEntities.map(key => {
-            const entity = entities[key];
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`w-full flex items-center gap-3 px-6 py-3 transition-colors ${activeTab === key ? 'bg-blue-600 text-white border-l-4 border-blue-400' : 'hover:bg-slate-800 hover:text-white border-l-4 border-transparent'}`}
+      )}
+
+      {/* Pop-up Chúc Mừng Toàn Cục (Success Modal) */}
+      {successPopup && (
+        <SuccessModal data={successPopup} onClose={() => setSuccessPopup(null)} />
+      )}
+
+      {/* MAIN LAYOUT ROUTING */}
+      {!currentUser ? (
+        <div className="relative h-screen bg-slate-100 flex items-center justify-center">
+          <LoginScreen onLogin={handleLogin} onRegister={handleRegister} />
+        </div>
+      ) : currentUser.role === 'CUSTOMER' ? (
+        <CustomerPortal 
+          user={currentUser} 
+          taiKhoan={taiKhoan} 
+          giaoDich={giaoDich} 
+          soTietKiem={soTietKiem} 
+          onLogout={handleLogout} 
+          onTransfer={handleCustomerTransfer}
+          onOpenSavings={handleCustomerOpenSavings}
+          onChangePassword={handleChangePassword}
+        />
+      ) : (
+        <div className="flex h-screen bg-slate-100 font-sans text-slate-800">
+          <div className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl z-10">
+            <div className="p-5 bg-slate-950 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">V</div>
+              <div>
+                <h1 className="text-white font-bold text-lg tracking-wide">VietnamBank</h1>
+                <p className="text-xs text-slate-400">{isEmployee ? 'Employee Portal' : 'Admin Portal v1.0'}</p>
+              </div>
+            </div>
+            <nav className="flex-1 py-4 overflow-y-auto">
+              <button 
+                onClick={() => setActiveTab('Dashboard')}
+                className={`w-full flex items-center gap-3 px-6 py-3 transition-colors ${activeTab === 'Dashboard' ? 'bg-blue-600 text-white border-l-4 border-blue-400' : 'hover:bg-slate-800 hover:text-white border-l-4 border-transparent'}`}
               >
-                {entity.icon} {entity.name}
+                <LayoutDashboard size={20} /> Dashboard
               </button>
-            );
-          })}
-        </nav>
-        <div className="p-4 bg-slate-950 text-xs text-center text-slate-500">
-          Chào mừng, {isEmployee ? currentUser.HoTen : 'Kazeko~sama'}!
+              <div className="px-6 py-2 mt-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Quản Lý Dữ Liệu</div>
+              {allowedEntities.map(key => {
+                const entity = entities[key];
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(key)}
+                    className={`w-full flex items-center gap-3 px-6 py-3 transition-colors ${activeTab === key ? 'bg-blue-600 text-white border-l-4 border-blue-400' : 'hover:bg-slate-800 hover:text-white border-l-4 border-transparent'}`}
+                  >
+                    {entity.icon} {entity.name}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="p-4 bg-slate-950 text-xs text-center text-slate-500">
+              Chào mừng, {isEmployee ? currentUser.HoTen : 'Kazeko~sama'}!
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8 z-0">
+              <h2 className="text-2xl font-bold text-slate-700">
+                {activeTab === 'Dashboard' ? 'Tổng Quan Hệ Thống' : `Quản Lý ${entities[activeTab]?.name}`}
+              </h2>
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium">Master: <span className="text-blue-600">{currentUser.name || 'Kazeko'}</span></span>
+                <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-blue-500 flex items-center justify-center">
+                  <UserCircle size={20} className="text-slate-500"/>
+                </div>
+                <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Đăng xuất">
+                  <LogOut size={20} />
+                </button>
+              </div>
+            </header>
+
+            <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
+              {activeTab === 'Dashboard' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <DashboardCard title="Khách Hàng" value={khachHang.length} icon={<Users size={24} className="text-blue-500" />} />
+                  <DashboardCard title="Tài Khoản Hoạt Động" value={taiKhoan.length} icon={<CreditCard size={24} className="text-emerald-500" />} />
+                  <DashboardCard title="Tổng Tiền Gửi (Sổ TK)" value={`${(soTietKiem.reduce((sum, s) => sum + parseFloat(s.SoTienGui), 0) / 1000000).toFixed(0)}Tr VNĐ`} icon={<PiggyBank size={24} className="text-purple-500" />} />
+                  <DashboardCard title="Tổng Số Giao Dịch" value={giaoDich.length} icon={<ArrowRightLeft size={24} className="text-orange-500" />} />
+                  {!isEmployee && <DashboardCard title="Nhân Viên" value={nhanVien.length} icon={<UserCircle size={24} className="text-indigo-500" />} />}
+                  {!isEmployee && <DashboardCard title="Chi Nhánh" value={chiNhanh.length} icon={<Building2 size={24} className="text-rose-500" />} />}
+                </div>
+              ) : (
+                <DataGrid 
+                  entity={entities[activeTab]} 
+                  entityKey={activeTab}
+                  onSave={handleSave} 
+                  onDelete={handleDelete} 
+                  isReadOnly={isEmployee}
+                />
+              )}
+            </main>
+          </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8 z-0">
-          <h2 className="text-2xl font-bold text-slate-700">
-            {activeTab === 'Dashboard' ? 'Tổng Quan Hệ Thống' : `Quản Lý ${entities[activeTab]?.name}`}
-          </h2>
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Master: <span className="text-blue-600">{currentUser.name || 'Kazeko'}</span></span>
-            <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-blue-500 flex items-center justify-center">
-              <UserCircle size={20} className="text-slate-500"/>
-            </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Đăng xuất">
-              <LogOut size={20} />
-            </button>
-          </div>
-        </header>
-
-        {/* Toast Notification */}
-        {toast && (
-          <div className={`absolute top-20 right-8 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-bounce ${toast.type === 'error' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 'bg-green-100 text-green-800 border-l-4 border-green-500'}`}>
-            {toast.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
-            <span className="font-medium">{toast.msg}</span>
-          </div>
-        )}
-
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
-          {activeTab === 'Dashboard' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               <DashboardCard title="Khách Hàng" value={khachHang.length} icon={<Users size={24} className="text-blue-500" />} />
-               <DashboardCard title="Tài Khoản Hoạt Động" value={taiKhoan.length} icon={<CreditCard size={24} className="text-emerald-500" />} />
-               <DashboardCard title="Tổng Tiền Gửi (Sổ TK)" value={`${(soTietKiem.reduce((sum, s) => sum + parseFloat(s.SoTienGui), 0) / 1000000).toFixed(0)}Tr VNĐ`} icon={<PiggyBank size={24} className="text-purple-500" />} />
-               <DashboardCard title="Tổng Số Giao Dịch" value={giaoDich.length} icon={<ArrowRightLeft size={24} className="text-orange-500" />} />
-               {!isEmployee && <DashboardCard title="Nhân Viên" value={nhanVien.length} icon={<UserCircle size={24} className="text-indigo-500" />} />}
-               {!isEmployee && <DashboardCard title="Chi Nhánh" value={chiNhanh.length} icon={<Building2 size={24} className="text-rose-500" />} />}
-            </div>
-          ) : (
-            <DataGrid 
-              entity={entities[activeTab]} 
-              entityKey={activeTab}
-              onSave={handleSave} 
-              onDelete={handleDelete} 
-              isReadOnly={isEmployee}
-            />
-          )}
-        </main>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
 // --- SUBCOMPONENTS ---
+
+// 🌟 POP-UP THÀNH CÔNG (SUCCESS MODAL) 🌟
+function SuccessModal({ data, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4 transition-all">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col items-center p-8 text-center animate-in zoom-in-90 duration-300">
+        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-500 shadow-inner">
+          <CheckCircle2 size={48} />
+        </div>
+        <h3 className="text-2xl font-bold text-slate-800 mb-3">{data.title}</h3>
+        <p className="text-slate-500 mb-8 leading-relaxed">{data.message}</p>
+        <button onClick={onClose} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+          Tuyệt Vời!
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function DashboardCard({ title, value, icon }) {
   return (
@@ -469,7 +502,6 @@ function DataGrid({ entity, entityKey, onSave, onDelete, isReadOnly }) {
   
   const pageSize = 5;
 
-  // Reset page when tab changes
   useEffect(() => { setCurrentPage(1); setSearchTerm(''); }, [entityKey]);
 
   const filteredData = useMemo(() => {
@@ -535,7 +567,6 @@ function DataGrid({ entity, entityKey, onSave, onDelete, isReadOnly }) {
                 {!isReadOnly && (
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {/* Giao dịch không cho sửa/xóa để đảm bảo tính toàn vẹn */}
                       {entityKey !== 'GiaoDich' && (
                         <>
                           <button onClick={() => openEditModal(row)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16}/></button>
@@ -596,10 +627,10 @@ function FormModal({ entity, initialData, onClose, onSubmit }) {
         </div>
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-5">
           {entity.fields.map(field => {
-            if (field.disabled && initialData) return null; // Ẩn field disabled khi thêm/sửa (như Mã GD)
+            if (field.disabled && initialData) return null; 
             if (field.disabled && !initialData) return null;
             return (
-              <div key={field.key} className={`${['DiaChi', 'NoiDung'].includes(field.key) ? 'md:col-span-2' : ''}`}>
+              <div key={field.key} className={`${['DiaChi', 'NoiDung', 'MatKhau'].includes(field.key) ? 'md:col-span-2' : ''}`}>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">
                   {field.label} {field.required && <span className="text-red-500">*</span>}
                 </label>
@@ -623,7 +654,7 @@ function FormModal({ entity, initialData, onClose, onSubmit }) {
                     required={field.required}
                     min={field.min}
                     step={field.step}
-                    readOnly={field.disabled || (initialData && field.key === entity.idKey)} // Không cho sửa Khóa chính
+                    readOnly={field.disabled || (initialData && field.key === entity.idKey)} 
                     className={`w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${field.disabled || (initialData && field.key === entity.idKey) ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
                   />
                 )}
@@ -649,9 +680,8 @@ function LoginScreen({ onLogin, onRegister }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  // Form đăng ký
   const [regData, setRegData] = useState({
-    HoTen: '', CCCD: '', NgaySinh: '', SoDienThoai: '', Email: '', DiaChi: ''
+    HoTen: '', CCCD: '', NgaySinh: '', SoDienThoai: '', Email: '', DiaChi: '', MatKhau: ''
   });
 
   const handleLoginSubmit = (e) => {
@@ -665,8 +695,8 @@ function LoginScreen({ onLogin, onRegister }) {
     if (success) {
       setIsLoginView(true);
       setUsername(regData.SoDienThoai);
-      setPassword('123'); // Đặt sẵn pass mặc định cho tiện trải nghiệm
-      setRegData({ HoTen: '', CCCD: '', NgaySinh: '', SoDienThoai: '', Email: '', DiaChi: '' });
+      setPassword(regData.MatKhau);
+      setRegData({ HoTen: '', CCCD: '', NgaySinh: '', SoDienThoai: '', Email: '', DiaChi: '', MatKhau: '' });
     }
   };
 
@@ -702,18 +732,19 @@ function LoginScreen({ onLogin, onRegister }) {
               <input type="text" name="SoDienThoai" value={regData.SoDienThoai} onChange={handleRegChange} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Dùng để đăng nhập" />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Mật Khẩu *</label>
+              <input type="password" name="MatKhau" value={regData.MatKhau} onChange={handleRegChange} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Đặt mật khẩu của bạn" />
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
               <input type="email" name="Email" value={regData.Email} onChange={handleRegChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Địa Chỉ</label>
-              <input type="text" name="DiaChi" value={regData.DiaChi} onChange={handleRegChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Địa Chỉ *</label>
+              <input type="text" name="DiaChi" value={regData.DiaChi} onChange={handleRegChange} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nhập địa chỉ cư trú" />
             </div>
           </div>
-          <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded-lg mt-2 border border-blue-100">
-            Lưu ý: Mật khẩu mặc định của bạn sẽ là <strong>123</strong>. Bạn sẽ được tự động cấp 1 tài khoản thanh toán sau khi đăng ký thành công.
-          </div>
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors mt-2">
+          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors mt-6">
             Đăng Ký
           </button>
         </form>
@@ -759,7 +790,7 @@ function LoginScreen({ onLogin, onRegister }) {
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-              placeholder="Mật khẩu mặc định: 123"
+              placeholder="Mật khẩu: 123456"
               required 
             />
           </div>
@@ -777,28 +808,28 @@ function LoginScreen({ onLogin, onRegister }) {
       <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-600">
         <p className="font-semibold mb-2">Tài khoản trải nghiệm:</p>
         <ul className="space-y-1 list-disc pl-5">
-          <li><strong>Admin:</strong> admin / 123</li>
-          <li><strong>Nhân viên:</strong> NV01 / 123 (Lê Thị Thu)</li>
-          <li><strong>Khách KH01:</strong> 0901111111 / 123 (Nguyễn Văn A)</li>
-          <li><strong>Khách KH02:</strong> 0902222222 / 123 (Trần Thị B)</li>
+          <li><strong>Admin:</strong> admin / 123456</li>
+          <li><strong>Nhân viên:</strong> NV01 / 123456 (Lê Thị Thu)</li>
+          <li><strong>Khách KH01:</strong> 0901111111 / 123456 (Nguyễn Văn A)</li>
+          <li><strong>Khách KH02:</strong> 0902222222 / 123456 (Trần Thị B)</li>
         </ul>
       </div>
     </div>
   );
 }
 
-function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTransfer, onOpenSavings }) {
+function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTransfer, onOpenSavings, onChangePassword }) {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSavingsModal, setShowSavingsModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  // Lọc dữ liệu chỉ hiển thị của Khách hàng đang đăng nhập
   const myAccounts = taiKhoan.filter(tk => tk.MaKH === user.MaKH);
   const myAccountIds = myAccounts.map(tk => tk.SoTaiKhoan);
   
   const mySavings = soTietKiem.filter(stk => myAccountIds.includes(stk.SoTaiKhoan));
   const myTransactions = giaoDich.filter(gd => 
     myAccountIds.includes(gd.SoTaiKhoan) || myAccountIds.includes(gd.TaiKhoanDoiUng)
-  ).sort((a, b) => new Date(b.NgayGD) - new Date(a.NgayGD)); // Xếp giao dịch mới nhất lên đầu
+  ).sort((a, b) => new Date(b.NgayGD) - new Date(a.NgayGD)); 
 
   const totalBalance = myAccounts.reduce((sum, tk) => sum + parseFloat(tk.SoDu), 0);
 
@@ -815,6 +846,9 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
               <UserCircle size={20} className="text-blue-200" />
               <span className="font-medium text-sm">{user.HoTen}</span>
             </div>
+            <button onClick={() => setShowPasswordModal(true)} className="bg-blue-700 hover:bg-blue-800 p-2 rounded-lg transition-colors" title="Đổi mật khẩu">
+              <Key size={18} />
+            </button>
             <button onClick={onLogout} className="bg-blue-700 hover:bg-blue-800 p-2 rounded-lg transition-colors" title="Đăng xuất">
               <LogOut size={18} />
             </button>
@@ -823,7 +857,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 space-y-8">
-        {/* Welcome & Balance */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 mb-2">Xin chào, {user.HoTen}!</h1>
@@ -835,7 +868,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
           </div>
         </div>
 
-        {/* Nút Chức Năng Giao Dịch Nhanh */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button onClick={() => setShowTransferModal(true)} className="bg-white hover:bg-slate-50 border border-slate-200 text-blue-600 p-4 rounded-xl shadow-sm flex items-center justify-center gap-3 font-bold text-lg transition-colors">
             <Send size={24} /> Chuyển Tiền Nhanh
@@ -846,7 +878,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Accounts & Savings */}
           <div className="lg:col-span-1 space-y-8">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="p-4 border-b border-slate-100 bg-slate-50 font-bold text-slate-700 flex items-center gap-2">
@@ -882,7 +913,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
             </div>
           </div>
 
-          {/* Transactions */}
           <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-fit">
             <div className="p-4 border-b border-slate-100 bg-slate-50 font-bold text-slate-700 flex items-center gap-2">
               <ArrowRightLeft size={18} className="text-orange-500"/> Lịch Sử Giao Dịch
@@ -892,7 +922,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
                 <ul className="divide-y divide-slate-100">
                   {myTransactions.map(gd => {
                     const isReceived = myAccountIds.includes(gd.TaiKhoanDoiUng);
-                    // Nạp tiền hoặc Nhận chuyển khoản thì hiển thị màu Xanh (+)
                     const isPositive = isReceived || gd.LoaiGD === 'Nạp tiền';
                     const amountClass = isPositive ? 'text-green-600' : 'text-red-600';
                     const sign = isPositive ? '+' : '-';
@@ -926,7 +955,6 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
         </div>
       </main>
 
-      {/* CÁC MODAL GIAO DỊCH */}
       {showTransferModal && (
         <TransferModal 
           accounts={myAccounts} 
@@ -947,13 +975,62 @@ function CustomerPortal({ user, taiKhoan, giaoDich, soTietKiem, onLogout, onTran
         />
       )}
 
-      {/* TRỢ LÝ ẢO SHIRO - TÍCH HỢP GEMINI AI */}
+      {showPasswordModal && (
+        <ChangePasswordModal 
+          onClose={() => setShowPasswordModal(false)}
+          onSubmit={(oldPass, newPass) => {
+            if(onChangePassword(oldPass, newPass)) setShowPasswordModal(false);
+          }}
+        />
+      )}
+
       <ShiroBot user={user} myAccounts={myAccounts} />
     </div>
   );
 }
 
-// --- COMPONENT CHỨC NĂNG MỚI ---
+function ChangePasswordModal({ onClose, onSubmit }) {
+  const [oldPass, setOldPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newPass !== confirmPass) {
+      setError('Mật khẩu xác nhận không khớp!');
+      return;
+    }
+    onSubmit(oldPass, newPass);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col">
+        <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Key size={20}/> Đổi Mật Khẩu</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-red-500"><X size={24}/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">{error}</div>}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Mật khẩu cũ</label>
+            <input type="password" value={oldPass} onChange={e => setOldPass(e.target.value)} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Mật khẩu mới</label>
+            <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} required minLength={6} placeholder="Tối thiểu 6 ký tự" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Xác nhận mật khẩu mới</label>
+            <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} required minLength={6} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg mt-4 transition-colors">Cập Nhật Mật Khẩu</button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function TransferModal({ accounts, onClose, onSubmit }) {
   const [tkNguon, setTkNguon] = useState(accounts[0]?.SoTaiKhoan || '');
@@ -1048,7 +1125,7 @@ function ShiroBot({ user, myAccounts }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const apiKey = ""; // Môi trường tự động cung cấp API key
+  const apiKey = ""; 
 
   const fetchWithBackoff = async (url, options, retries = 5) => {
     const delays = [1000, 2000, 4000, 8000, 16000];
