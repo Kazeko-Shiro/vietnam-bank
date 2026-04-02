@@ -412,7 +412,7 @@ export default function App() {
               })}
             </nav>
             <div className="p-4 bg-slate-950 text-xs text-center text-slate-500">
-              Chào mừng, {isEmployee ? currentUser.HoTen : 'Kazeko~sama'}!
+              Chào mừng {isEmployee ? currentUser.HoTen : ''}!
             </div>
           </div>
 
@@ -422,7 +422,7 @@ export default function App() {
                 {activeTab === 'Dashboard' ? 'Tổng Quan Hệ Thống' : `Quản Lý ${entities[activeTab]?.name}`}
               </h2>
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium">Master: <span className="text-blue-600">{currentUser.name || 'Kazeko'}</span></span>
+                <span className="text-sm font-medium">User: <span className="text-blue-600">{currentUser.name || 'Kazeko'}</span></span>
                 <div className="w-8 h-8 rounded-full bg-slate-200 border-2 border-blue-500 flex items-center justify-center">
                   <UserCircle size={20} className="text-slate-500"/>
                 </div>
